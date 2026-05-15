@@ -735,6 +735,12 @@ src_libdrivers_la_SOURCES += \
 	src/hardware/tondaj-sl-814/protocol.c \
 	src/hardware/tondaj-sl-814/api.c
 endif
+if HW_UNI_T_MSO2
+src_libdrivers_la_SOURCES += \
+	src/hardware/uni-t-mso2/protocol.h \
+	src/hardware/uni-t-mso2/protocol.c \
+	src/hardware/uni-t-mso2/api.c
+endif
 if HW_UNI_T_DMM
 src_libdrivers_la_SOURCES += \
 	src/hardware/uni-t-dmm/protocol.h \
@@ -1145,4 +1151,3 @@ dist-changelog:
 	else \
 		rm -f .ChangeLog.tmp; exit 1; \
 	fi
-
