@@ -47,7 +47,7 @@ enum protocol_version {
 
 enum data_format {
 	/* Used by MSO2204 */
-	FORMAT_VISA,
+	FORMAT_VXI,
 	FORMAT_RAW,
 	FORMAT_IEEE488_2,
 };

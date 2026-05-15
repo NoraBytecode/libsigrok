@@ -882,20 +882,12 @@ SR_PRIV int uni_t_mso2_get_dev_cfg(const struct sr_dev_inst *sdi)
 
 	/* Digital channel state. */
 	if (devc->model->has_digital) {
-		if (sr_scpi_get_bool(sdi->conn,
-				devc->model->series->protocol >= PROTOCOL_V3 ?
-					":LA:STAT?" : ":LA:DISP?",
-				&devc->la_enabled) != SR_OK)
+		if (sr_scpi_get_bool(sdi->conn,":LA:STATe?", &devc->la_enabled) != SR_OK)
 			return SR_ERR;
 		sr_dbg("Logic analyzer %s, current digital channel state:",
 				devc->la_enabled ? "enabled" : "disabled");
 		for (i = 0; i < ARRAY_SIZE(devc->digital_channels); i++) {
-			if (devc->model->series->protocol >= PROTOCOL_V5)
-				cmd = g_strdup_printf(":LA:DISP? D%d", i);
-			else if (devc->model->series->protocol >= PROTOCOL_V3)
-				cmd = g_strdup_printf(":LA:DIG%d:DISP?", i);
-			else
-				cmd = g_strdup_printf(":DIG%d:TURN?", i);
+			cmd = g_strdup_printf(":LA:DIGital%d:DISPlay?", i);
 			res = sr_scpi_get_bool(sdi->conn, cmd, &devc->digital_channels[i]);
 			g_free(cmd);
 			if (res != SR_OK)
@@ -912,30 +904,31 @@ SR_PRIV int uni_t_mso2_get_dev_cfg(const struct sr_dev_inst *sdi)
 	sr_dbg("Current timebase %g", devc->timebase);
 
 	/* Probe attenuation. */
-	for (i = 0; i < devc->model->analog_channels; i++) {
-		cmd = g_strdup_printf(":CHAN%d:PROB?", i + 1);
-
-		/* DSO1000B series prints an X after the probe factor, so
-		 * we get a string and check for that instead of only handling
-		 * floats. */
-		char *response;
-		res = sr_scpi_get_string(sdi->conn, cmd, &response);
-		if (res != SR_OK)
-			return SR_ERR;
-
-		int len = strlen(response);
-		if (response[len-1] == 'X')
-			response[len-1] = 0;
-
-		res = sr_atof_ascii(response, &devc->attenuation[i]);
-		g_free(response);
-		g_free(cmd);
-		if (res != SR_OK)
-			return SR_ERR;
-	}
-	sr_dbg("Current probe attenuation:");
-	for (i = 0; i < devc->model->analog_channels; i++)
-		sr_dbg("CH%d %g", i + 1, devc->attenuation[i]);
+	// TODO: Attenuation is broken somehow
+	// for (i = 0; i < devc->model->analog_channels; i++) {
+	// 	cmd = g_strdup_printf(":CHANnel%d:PROBe?", i + 1);
+	//
+	// 	/* DSO1000B series prints an X after the probe factor, so
+	// 	 * we get a string and check for that instead of only handling
+	// 	 * floats. */
+	// 	char *response;
+	// 	res = sr_scpi_get_string(sdi->conn, cmd, &response);
+	// 	if (res != SR_OK)
+	// 		return SR_ERR;
+	//
+	// 	int len = strlen(response);
+	// 	if (response[len-1] == 'X')
+	// 		response[len-1] = 0;
+	//
+	// 	res = sr_atof_ascii(response, &devc->attenuation[i]);
+	// 	g_free(response);
+	// 	g_free(cmd);
+	// 	if (res != SR_OK)
+	// 		return SR_ERR;
+	// }
+	// sr_dbg("Current probe attenuation:");
+	// for (i = 0; i < devc->model->analog_channels; i++)
+	// 	sr_dbg("CH%d %g", i + 1, devc->attenuation[i]);
 
 	/* Vertical gain and offset. */
 	if (uni_t_mso2_get_dev_cfg_vertical(sdi) != SR_OK)
@@ -958,7 +951,7 @@ SR_PRIV int uni_t_mso2_get_dev_cfg(const struct sr_dev_inst *sdi)
 	/* Trigger source. */
 	g_free(devc->trigger_source);
 	devc->trigger_source = NULL;
-	if (sr_scpi_get_string(sdi->conn, ":TRIG:EDGE:SOUR?", &devc->trigger_source) != SR_OK)
+	if (sr_scpi_get_string(sdi->conn, ":TRIGger:SOURce?", &devc->trigger_source) != SR_OK)
 		return SR_ERR;
 	sr_dbg("Current trigger source %s", devc->trigger_source);
 
@@ -976,7 +969,7 @@ SR_PRIV int uni_t_mso2_get_dev_cfg(const struct sr_dev_inst *sdi)
 	sr_dbg("Current trigger slope %s", devc->trigger_slope);
 
 	/* Trigger level. */
-	if (sr_scpi_get_float(sdi->conn, ":TRIG:EDGE:LEV?", &devc->trigger_level) != SR_OK)
+	if (sr_scpi_get_float(sdi->conn, ":TRIGger:LEVel?", &devc->trigger_level) != SR_OK)
 		return SR_ERR;
 	sr_dbg("Current trigger level %g", devc->trigger_level);
 

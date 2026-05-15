@@ -169,19 +169,19 @@ enum vendor {
 };
 
 enum series {
-	MSO2204,
+	MSO2204_S,
 };
 
 /* short name, full name */
 static const struct uni_t_mso2_vendor supported_vendors[] = {
-	[UNI_T] = {"UNI-T", "UNI-T"},
+	[UNI_T] = {"UNI-T", "UNI-TREND TECHNOLOGY"},
 };
 
 #define VENDOR(x) &supported_vendors[x]
 /* vendor, series/name, protocol, data format, max timebase, min vdiv,
  * number of horizontal divs, live waveform samples, memory buffer samples */
 static const struct uni_t_mso2_series supported_series[] = {
-	[MSO2204] = {VENDOR(UNI_T), "MSO2204", PROTOCOL_V1, FORMAT_VISA,
+	[MSO2204_S] = {VENDOR(UNI_T), "MSO2204-S", PROTOCOL_V1, FORMAT_VXI,
 		{1000, 1}, {500, 1000000}, 10, 1000, 0},
 };
 
@@ -195,7 +195,7 @@ static const struct uni_t_mso2_series supported_series[] = {
 	digital ? ARRAY_SIZE(trigger_sources_##num##_chans) : (num + 2)
 /* series, model, min timebase, analog channels, digital */
 static const struct uni_t_mso2_model supported_models[] = {
-	{SERIES(MSO2204), "MSO2204", {1, 1000000000}, CH_INFO(4, true), std_cmd},
+	{SERIES(MSO2204_S), "MSO2204-S", {1, 1000000000}, CH_INFO(4, true), std_cmd},
 };
 
 static struct sr_dev_driver uni_t_mso2_driver_info;
