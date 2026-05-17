@@ -39,24 +39,60 @@
 #include "protocol.h"
 
 static const uint32_t scanopts[] = {
-	SR_CONF_CONN,
-	SR_CONF_SERIALCOMM,
+    SR_CONF_CONN,
+    SR_CONF_FORCE_DETECT,
 };
 
 static const uint32_t drvopts[] = {
-	SR_CONF_OSCILLOSCOPE,
+    SR_CONF_OSCILLOSCOPE, // :CHANnel<n>:DISPlay
+    SR_CONF_LOGIC_ANALYZER, // :LA:STATe
+    SR_CONF_MULTIMETER, // :DVM:ENABle
 };
 
 static const uint32_t devopts[] = {
-	SR_CONF_LIMIT_FRAMES | SR_CONF_GET | SR_CONF_SET,
-	SR_CONF_SAMPLERATE | SR_CONF_GET,
-	SR_CONF_TIMEBASE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
-	SR_CONF_NUM_HDIV | SR_CONF_GET,
-	SR_CONF_HORIZ_TRIGGERPOS | SR_CONF_SET,
-	SR_CONF_TRIGGER_SOURCE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
-	SR_CONF_TRIGGER_SLOPE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
-	SR_CONF_TRIGGER_LEVEL | SR_CONF_GET | SR_CONF_SET,
-	SR_CONF_DATA_SOURCE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
+    SR_CONF_LIMIT_SAMPLES | SR_CONF_GET | SR_CONF_SET, // :WAVeform:STARt and :WAVeform:STOP (not sure)
+    // SR_CONF_CONTINUOUS (no obvious support, but maybe can be implemented)
+
+    // Analog channels
+    SR_CONF_ENABLED | SR_CONF_GET | SR_CONF_SET, // :CHANnel<n>:DISPlay
+    // SR_CONF_CHANNEL_CONFIG, // TODO: Find out what this configures
+
+    SR_CONF_SAMPLERATE | SR_CONF_GET, // :WAVeform:XINCrement? (unsure)
+    SR_CONF_LIMIT_FRAMES | SR_CONF_GET | SR_CONF_SET, //
+    SR_CONF_TIMEBASE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST, //:TIMebase:SCALe
+    SR_CONF_NUM_HDIV | SR_CONF_GET, //
+    SR_CONF_HORIZ_TRIGGERPOS | SR_CONF_SET, //
+
+    // :TRIGger:MODE
+    // EDGE (edge trigger)
+    // PULSe (pulse width trigger)
+    // VIDeo (video trigger)
+    // SLOPe (slope trigger)
+    SR_CONF_TRIGGER_SLOPE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST, // :TRIGger:SLOPe:SLOPe
+    // RUNT (runt trigger)
+    // WINDow (over-amplitude trigger)
+    // DELay (delay trigger)
+    // TIMeout (timeout trigger)
+    // DURation (duration time trigger)
+    // SHOLd (setup hold trigger)
+    // NE (Nth edge trigger)
+    // PATTern (pattern trigger)
+    SR_CONF_TRIGGER_PATTERN | SR_CONF_SET, // :TRIGger:PATTern:PATTern
+
+    SR_CONF_TRIGGER_MATCH | SR_CONF_GET | SR_CONF_SET,
+    SR_CONF_TRIGGER_LEVEL | SR_CONF_GET | SR_CONF_SET, // :TRIGger:LEVel
+    SR_CONF_TRIGGER_SOURCE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST, // :TRIGger:SOURce
+    SR_CONF_DATA_SOURCE | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
+    SR_CONF_AVERAGING | SR_CONF_GET | SR_CONF_SET, // :ACQuire:TYPE
+    SR_CONF_AVG_SAMPLES | SR_CONF_GET | SR_CONF_SET, // :ACQuire:AVERages:COUNt
+
+    // Logic analyzer
+    SR_CONF_VOLTAGE_THRESHOLD | SR_CONF_GET | SR_CONF_SET | SR_CONF_LIST,
+    // :LA:POD<n>:THReshold (only set for group of channels)
+    SR_CONF_LOGIC_THRESHOLD_CUSTOM | SR_CONF_GET | SR_CONF_SET, // :LA:POD<n>:THReshold (only set for group of channels)
+
+    // Voltmeter
+    SR_CONF_VOLTAGE | SR_CONF_GET, // :DVM:CURRent?
 };
 
 static const uint32_t devopts_cg_analog[] = {
@@ -67,91 +103,88 @@ static const uint32_t devopts_cg_analog[] = {
 };
 
 static const uint64_t timebases[][2] = {
-	/* nanoseconds */
-	{ 1, 1000000000 },
-	{ 2, 1000000000 },
-	{ 5, 1000000000 },
-	{ 10, 1000000000 },
-	{ 20, 1000000000 },
-	{ 50, 1000000000 },
-	{ 100, 1000000000 },
-	{ 500, 1000000000 },
-	/* microseconds */
-	{ 1, 1000000 },
-	{ 2, 1000000 },
-	{ 5, 1000000 },
-	{ 10, 1000000 },
-	{ 20, 1000000 },
-	{ 50, 1000000 },
-	{ 100, 1000000 },
-	{ 200, 1000000 },
-	{ 500, 1000000 },
-	/* milliseconds */
-	{ 1, 1000 },
-	{ 2, 1000 },
-	{ 5, 1000 },
-	{ 10, 1000 },
-	{ 20, 1000 },
-	{ 50, 1000 },
-	{ 100, 1000 },
-	{ 200, 1000 },
-	{ 500, 1000 },
-	/* seconds */
-	{ 1, 1 },
-	{ 2, 1 },
-	{ 5, 1 },
-	{ 10, 1 },
-	{ 20, 1 },
-	{ 50, 1 },
-	{ 100, 1 },
-	{ 200, 1 },
-	{ 500, 1 },
-	{ 1000, 1 },
+    /* nanoseconds */
+    {1, 1000000000},
+    {2, 1000000000},
+    {5, 1000000000},
+    {10, 1000000000},
+    {25, 1000000000},
+    {50, 1000000000},
+    {100, 1000000000},
+    {200, 1000000000},
+    {500, 1000000000},
+    /* microseconds */
+    {1, 1000000},
+    {2, 1000000},
+    {5, 1000000},
+    {10, 1000000},
+    {20, 1000000},
+    {50, 1000000},
+    {100, 1000000},
+    {200, 1000000},
+    {500, 1000000},
+    /* milliseconds */
+    {1, 1000},
+    {2, 1000},
+    {5, 1000},
+    {10, 1000},
+    {20, 1000},
+    {50, 1000},
+    {100, 1000},
+    {200, 1000},
+    {500, 1000},
+    /* seconds */
+    {1, 1},
+    {2, 1},
+    {5, 1},
+    {10, 1},
+    {20, 1},
+    {50, 1},
+    {100, 1},
+    {200, 1},
+    {500, 1},
+    {1000, 1},
 };
 
 static const uint64_t vdivs[][2] = {
-	/* microvolts */
-	{ 500, 1000000 },
-	/* millivolts */
-	{ 1, 1000 },
-	{ 2, 1000 },
-	{ 5, 1000 },
-	{ 10, 1000 },
-	{ 20, 1000 },
-	{ 50, 1000 },
-	{ 100, 1000 },
-	{ 200, 1000 },
-	{ 500, 1000 },
-	/* volts */
-	{ 1, 1 },
-	{ 2, 1 },
-	{ 5, 1 },
-	{ 10, 1 },
-	{ 20, 1 },
-	{ 50, 1 },
-	{ 100, 1 },
+    /* millivolts */
+    {5, 1000},
+    {10, 1000},
+    {20, 1000},
+    {50, 1000},
+    {100, 1000},
+    {200, 1000},
+    {500, 1000},
+    /* volts */
+    {1, 1},
+    {2, 1},
+    {5, 1},
+    {10, 1},
+    {20, 1},
+    {50, 1},
+    {100, 1},
+    {200, 1},
 };
 
-static const char *trigger_sources_2_chans[] = {
-	"CH1", "CH2",
-	"EXT", "AC Line",
-	"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
-	"D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
+static const char* trigger_sources_4_chans[] = {
+    "CH1", "CH2", "CH3", "CH4",
+    "MATH", "REFA", "REFB", "REFC", "REFD",
+    "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+    "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
 };
 
-static const char *trigger_sources_4_chans[] = {
-	"CH1", "CH2", "CH3", "CH4",
-	"EXT", "AC Line",
-	"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
-	"D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
+static const char* trigger_slopes[] = {
+    "r", "f", // :TRIGger:MODE
 };
 
-static const char *trigger_slopes[] = {
-	"r", "f",
+static const char* coupling[] = {
+    "AC", "DC", "GND", // :CHANnel<n>:COUPling
 };
 
-static const char *coupling[] = {
-	"AC", "DC", "GND",
+// SR_CONF_VOLTAGE_THRESHOLD
+static const char* logic_analyzr_voltage_thresholeds[] = {
+    "TTL", "ECL", "PECL", "CLDS", // :LA:POD<n>:THReshold
+    // (or custom)
 };
 
 static const uint64_t probe_factor[] = {
@@ -159,10 +192,9 @@ static const uint64_t probe_factor[] = {
 };
 
 /* Do not change the order of entries */
-static const char *data_sources[] = {
-	"Live",
-	"Memory",
-	"Segmented",
+static const char* data_sources[] = {
+    "Normal", // Read the current waveform data, the count of waveform data is fixed count.
+    "Raw", // Read the waveform data from internal storage, the count of waveform data is related to storage depth.
 };
 
 static const struct uni_t_mso2_command std_cmd[] = {
