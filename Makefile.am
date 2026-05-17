@@ -739,6 +739,8 @@ if HW_UNI_T_MSO2
 src_libdrivers_la_SOURCES += \
 	src/hardware/uni-t-mso2/protocol.h \
 	src/hardware/uni-t-mso2/protocol.c \
+	src/hardware/uni-t-mso2/generated_from_programming_manual.h \
+	src/hardware/uni-t-mso2/generated_from_programming_manual.c \
 	src/hardware/uni-t-mso2/api.c
 endif
 if HW_UNI_T_DMM
