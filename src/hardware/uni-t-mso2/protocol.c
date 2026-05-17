@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Martin Ling <martin-git@earth.li>
  * Copyright (C) 2013 Bert Vermeulen <bert@biot.com>
  * Copyright (C) 2013 Mathias Grimmberger <mgri@zaphod.sax.de>
+ * Copyright (C) 2026 Nora <sigrok@norabyte.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,31 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
-#include <time.h>
-#include <glib.h>
-#include <libsigrok/libsigrok.h>
-#include "libsigrok-internal.h"
-#include "scpi.h"
-#include "protocol.h"
-
 /*
- * This is a unified protocol driver for the DS1000 and DS2000 series.
+ * This is a protocol driver for the MSO2204-S.
+ * MSO2204-S support tested with a UNI-T MSO2204-S using firmware version V1.04.0067.
  *
- * DS1000 support tested with a UNI-T DS1102D.
+ * This driver started as a copy of the rigol-ds driver,
+ * originally created by Martin Ling, Bert Vermeulen, and Mathias Grimmberger.
+ * Modifications to it have been made solely by Nora.
+ * For any support or issues, please contact me at sigrok@norabyte.net
  *
- * DS2000 support tested with a UNI-T DS2072 using firmware version 01.01.00.02.
+ * The UNI-T MSO2204-S series scopes are reachable via USB and their LAN port.
+ * This protocol is only tested on the LAN connection and uses the VXI protocol.
  *
- * The UNI-T DS2000 series scopes try to adhere to the IEEE 488.2 (I think)
- * standard. If you want to read it - it costs real money...
- *
+ * // TODO: Verify below
  * Every response from the scope has a linefeed appended because the
  * standard says so. In principle this could be ignored because sending the
  * next command clears the output queue of the scope. This driver tries to
@@ -64,12 +53,26 @@
  * After this header as many data bytes as indicated follow.
  *
  * Each data block has a trailing linefeed too.
- */
+*/
 
-static int parse_int(const char *str, int *ret)
-{
-	char *e;
-	long tmp;
+#include <config.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
+#include <time.h>
+#include <glib.h>
+#include <libsigrok/libsigrok.h>
+#include "libsigrok-internal.h"
+#include "scpi.h"
+#include "protocol.h"
+
+static int parse_int(const char* str, int* ret) {
+    char* e;
+    long tmp;
 
 	errno = 0;
 	tmp = strtol(str, &e, 10);
