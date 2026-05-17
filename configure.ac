@@ -212,6 +212,8 @@ PKG_CHECK_MODULES([TIRPC],
 	[sr_cv_have_tirpc=no])
 AS_IF([test "x$sr_cv_have_sunrpc" = xyes -o "x$sr_cv_have_tirpc" = xyes],
 	[sr_cv_have_rpc=yes], [sr_cv_have_rpc=no])
+AS_IF([test "x$sr_cv_have_rpc" = xyes],
+	[SR_APPEND([sr_deps_avail], [rpc])])
 
 AC_SUBST(RPC_CFLAGS)
 AC_SUBST(RPC_LIBS)
@@ -390,7 +392,7 @@ SR_DRIVER([Sysclk SLA5032], [sysclk-sla5032], [libusb])
 SR_DRIVER([Teleinfo], [teleinfo], [serial_comm])
 SR_DRIVER([Testo], [testo], [libusb])
 SR_DRIVER([Tondaj SL-814], [tondaj-sl-814], [serial_comm])
-SR_DRIVER([UNI-T MSO2], [uni-t-mso2], [librevisa])
+SR_DRIVER([UNI-T MSO2], [uni-t-mso2], [librevisa rpc])
 SR_DRIVER([UNI-T DMM], [uni-t-dmm], [libusb])
 SR_DRIVER([UNI-T UT181A], [uni-t-ut181a], [serial_comm])
 SR_DRIVER([UNI-T UT32x], [uni-t-ut32x], [serial_comm])
