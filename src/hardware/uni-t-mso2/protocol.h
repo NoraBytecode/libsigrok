@@ -46,17 +46,17 @@
 
 enum protocol_version {
 	PROTOCOL_V1, /* MSO2204 */
-	PROTOCOL_V2,
-	PROTOCOL_V3,
-	PROTOCOL_V4,
-	PROTOCOL_V5,
+	PROTOCOL_V2, // TODO: Remove
+	PROTOCOL_V3, // TODO: Remove
+	PROTOCOL_V4, // TODO: Remove
+	PROTOCOL_V5, // TODO: Remove
 };
 
 enum data_format {
 	/* Used by MSO2204 */
 	FORMAT_VXI,
-	FORMAT_RAW,
-	FORMAT_IEEE488_2,
+	FORMAT_RAW, // TODO: Remove
+	FORMAT_IEEE488_2, // TODO: Remove
 };
 
 enum data_source {
